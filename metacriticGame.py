@@ -25,7 +25,7 @@ def get_game_scores(game_to_find,list_games):
 
 
 def translate_game_name(game):
-    dic = [[":",""], ['.',''], ['"',''], ["&",""], ['&amp;',""], ['&amp;',""], ['(EU)',""], ['[DLC] ',""], ['®',""], ['(CHN/JP/KOR)',""], ['(JP)',""], ['(US/JP)',""], ['(US)',""], ["'",""], ["(AU)",""],['','']]
+    dic = [[":",""], ['.',''], ['"',''], ["&",""], ['&amp;',""], ['&amp;',""], ['(EU)',""], ['-',""], ['®',""],['™',""],['!',""],['~',""], ['(CHN/JP/KOR)',""],['FOR NINTENDO SWITCH',""] ,['for Nintendo Switch',""] ,['(JP)',""], ['(US/JP)',""],['(US/EU)',""],['(US)',""], ["'",""], ["(AU)",""],['','']]
     game = replace_all(game, dic)
     return game.lower()
 
