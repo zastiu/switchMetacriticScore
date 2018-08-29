@@ -8,12 +8,10 @@ import tkinter as tk
 import tkinter.ttk as ttk
 import xml.etree.ElementTree as ET
 
-
 __author__ = "zastiu"
-__version__ = "v0.0.5"
+__version__ = "v0.0.6"
 
 fileOutName = 'z_titleSwitchScore.txt'
-fileMetacritic = "z_titleSwitchMetacritic.txt"
 titleKeysFile = 'titlekeys.txt'
 
 def get_game_scores(game_to_find,list_games):
@@ -41,7 +39,7 @@ def get_list_of_games():
     
     page = 0
     last_page = False
-    fOutt = open(fileMetacritic, 'w', encoding="utf-8")
+    #fOutt = open(fileMetacritic, 'w', encoding="utf-8")
     while(last_page == False):
         url = "http://www.metacritic.com/browse/games/score/metascore/all/switch/all?sort=desc&page="+str(page)
         
@@ -62,18 +60,18 @@ def get_list_of_games():
             for game in etree.findall(".//*[@class='product_row game first']"):
                game_name,game_score,user_score = get_game_info(game)
                list_games.append([game_name,game_score,user_score])
-               fOutt.write(game_name+"|"+game_score+"|"+user_score )           
+               #fOutt.write(game_name+"|"+game_score+"|"+user_score+ "\n")
             for game in etree.findall(".//*[@class='product_row game']"):
                game_name,game_score,user_score = get_game_info(game)
                list_games.append([game_name,game_score,user_score])
-               fOutt.write(game_name+"|"+game_score+"|"+user_score )
+               #fOutt.write(game_name+"|"+game_score+"|"+user_score + "\n")
             for game in etree.findall(".//*[@class='product_row game lastt']"):
                game_name,game_score,user_score = get_game_info(game)
                list_games.append([game_name,game_score,user_score])
-               fOutt.write(game_name+"|"+game_score+"|"+user_score )
+               #fOutt.write(game_name+"|"+game_score+"|"+user_score + "\n")
                
         page = page+1
-    fOutt.close()
+    #fOutt.close()
     return list_games
    
 def get_game_info(game_element):
@@ -99,7 +97,7 @@ def keep_trying_to_get_html(url, attempt=0):
         user_agent = {
             'User-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 
-        html_doc = requests.get(url, headers=user_agent )
+        html_doc = requests.get(url, headers=user_agent)
         return html_doc
     except:
         if attempt > 3:
@@ -185,8 +183,8 @@ except Exception as e:
     os.system("pause")
     exit()
 
-if not os.path.exists(fileMetacritic) and not os.path.exists(fileOutName):
-    print("Creating " + fileMetacritic)    
+if not os.path.exists(fileOutName):
+    print("Getting scores")
     list_games = get_list_of_games()
     print("Creating " + fileOutName)
     try:
@@ -202,11 +200,9 @@ if not os.path.exists(fileMetacritic) and not os.path.exists(fileOutName):
         print("Error:", e)
         os.system("pause")
 else:
-    print("File "+fileOutName+"and "+fileMetacritic+ " found")  
+    print("File "+fileOutName+" found")
 
 root = tk.Tk()
 app = App(root)
 app.grid()
 app.mainloop()
-
-
