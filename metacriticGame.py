@@ -7,9 +7,10 @@ import os
 import tkinter as tk
 import tkinter.ttk as ttk
 import xml.etree.ElementTree as ET
+import platform
 
 __author__ = "zastiu"
-__version__ = "v0.0.6"
+__version__ = "v0.0.7"
 
 fileOutName = 'z_titleSwitchScore.txt'
 titleKeysFile = 'titlekeys.txt'
@@ -20,12 +21,11 @@ def get_game_scores(game_to_find,list_games):
         if translate_game_name(game[0]) == translate_game_name(game_to_find):
             score = game[1]            
             user_score = game[2]
-            return game[1],game[2]
-    return "-","-"   
-
+            return score,user_score
+    return "-","-"
 
 def translate_game_name(game):
-    dic = [[":",""], ['.',''], ['"',''], ["&",""], ['&amp;',""], ['&amp;',""], ['(EU)',""], ['-',""], ['®',""],['™',""],['!',""],['~',""], ['(CHN/JP/KOR)',""],['FOR NINTENDO SWITCH',""] ,['for Nintendo Switch',""] ,['(JP)',""], ['(US/JP)',""],['(US/EU)',""],['(US)',""], ["'",""], ["(AU)",""],['','']]
+    dic = [[":",""], ['.',''], ['"',''], ["&",""], ['&amp;',""], ['&amp;',""], ['(EU)',""], ['-',""], ['®',""],['™',""],['!',""],['~',""], ['(CHN/JP/KOR)',""],['FOR NINTENDO SWITCH',""] ,['for Nintendo Switch',""] ,['(JP)',""], ['(US/JP)',""],['(US/EU)',""],['(US)',""], ["'",""], ["(AU)",""],[' ','']]
     game = replace_all(game, dic)
     return game.lower()
 
@@ -42,36 +42,27 @@ def get_list_of_games():
     #fOutt = open(fileMetacritic, 'w', encoding="utf-8")
     while(last_page == False):
         url = "http://www.metacritic.com/browse/games/score/metascore/all/switch/all?sort=desc&page="+str(page)
-        
         html_doc = keep_trying_to_get_html(url)
         cont = html_doc.content
-
         if str(cont).find("No Results Found")>=0:
             last_page = True
-        else:       
-
+        else:
             split1 =  str(cont).split('body_wrap">')[1]
             split2 =  split1.split('<div class="post_foot">')[0]
             tree = split2.replace("\\n","").replace("\\t","").replace("  ","").replace("&","&amp;")
             tree = tree[:-12]
-           
             parser = ET.XMLParser(encoding="utf-8")
             etree = ET.fromstring(tree, parser)
             for game in etree.findall(".//*[@class='product_row game first']"):
                game_name,game_score,user_score = get_game_info(game)
                list_games.append([game_name,game_score,user_score])
-               #fOutt.write(game_name+"|"+game_score+"|"+user_score+ "\n")
             for game in etree.findall(".//*[@class='product_row game']"):
                game_name,game_score,user_score = get_game_info(game)
                list_games.append([game_name,game_score,user_score])
-               #fOutt.write(game_name+"|"+game_score+"|"+user_score + "\n")
             for game in etree.findall(".//*[@class='product_row game lastt']"):
                game_name,game_score,user_score = get_game_info(game)
                list_games.append([game_name,game_score,user_score])
-               #fOutt.write(game_name+"|"+game_score+"|"+user_score + "\n")
-               
         page = page+1
-    #fOutt.close()
     return list_games
    
 def get_game_info(game_element):
@@ -88,8 +79,7 @@ def get_game_info(game_element):
         game_score = "-"
     if user_score == "tbd":
         user_score = "-"
-    return game_name,game_score,user_score   
-    
+    return game_name,game_score,user_score
     
 def keep_trying_to_get_html(url, attempt=0):
     logging.debug('[keep_trying_to_get_html] Making request to: ' + url)
@@ -111,13 +101,39 @@ def keep_trying_to_get_html(url, attempt=0):
 class App(tk.Frame):
     def __init__(self, master=None):
 
+        global sys_name
+        self.listWidth = 67
+        sys_name = "Win"
+
+        ##        global save_game_folder
+        ##        save_game_folder = False -- To be worked on in the future
+
+        if platform.system() == 'Linux':
+            sys_name = "Linux"
+
+        if platform.system() == 'Darwin':
+            sys_name = "Mac"
+            self.listWidth = 39
+        self.sys_name = sys_name
+
         tk.Frame.__init__(self, master)
         self.master = master
         nameApp = "Metacritic Score " + __version__
         root.wm_title(nameApp)
 
+        self.search_var = tk.StringVar()
+        self.search_var.trace("w", lambda name, index, mode: self.update_list())
+
         game_selection_frame = tk.Frame(root)
-        game_selection_frame.grid(row=1, column=0, padx=20, pady=20, sticky="N")
+        game_selection_frame.grid(row=1, column=0, padx=20, pady=20, sticky="nsew")
+
+        # Filter entrybox
+        if sys_name != "Mac":
+            entryWidth = self.listWidth + 3
+        else:
+            entryWidth = self.listWidth
+        self.entry = tk.Entry(game_selection_frame, textvariable=self.search_var, width=entryWidth)
+        self.entry.grid(row=0, column=0, columnspan=2, sticky="nsew")
 
         self.scrollbar = tk.Scrollbar(game_selection_frame)
         ##        self.scrollbar.grid(row=1, column=1, sticky=N+S+W)
@@ -174,6 +190,27 @@ class App(tk.Frame):
         # switch the heading so it will sort in the opposite direction
         self.tree.heading(col, command=lambda col=col: self.sortby(tree, col, \
                                                                    int(not descending)))
+
+    def update_list(self):
+
+        search_term = self.search_var.get()
+        self.tree.delete(*self.tree.get_children())
+        i=1
+        for game in self.games:
+            number = i
+            game_name = game.split("|")[0]
+            score = game.split("|")[1]
+            user_score = game.split("|")[2]
+            tree_row = (number, game_name, score, user_score)
+            i = i + 1
+            if search_term.lower() in game_name.lower():
+                self.tree.insert('', 'end', values=tree_row)
+
+        self.tree.yview_moveto(0)
+        # Reset the sorting back to default (descending)
+        self.tree.heading("num", text="#", command=lambda c="num": self.sortby(self.tree, c, 1))
+        self.tree.heading("G", text=("Game"), command=lambda c="G": self.sortby(self.tree, c, 1))
+        self.tree.heading("S", text=("State"), command=lambda c="S": self.sortby(self.tree, c, 1))
 
 try:
     with open(titleKeysFile, encoding="utf8") as f:
