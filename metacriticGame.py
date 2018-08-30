@@ -210,8 +210,8 @@ class App(tk.Frame):
         # Reset the sorting back to default (descending)
         self.tree.heading("num", text="#", command=lambda c="num": self.sortby(self.tree, c, 1))
         self.tree.heading("G", text=("Game"), command=lambda c="G": self.sortby(self.tree, c, 1))
-        self.tree.heading("S", text=("State"), command=lambda c="S": self.sortby(self.tree, c, 1))
-
+        self.tree.heading("S", text=("Score"), command=lambda c="S": self.sortby(self.tree, c, 1))
+        self.tree.heading("US", text=("User Score"), command=lambda c="S": self.sortby(self.tree, c, 1))
 try:
     with open(titleKeysFile, encoding="utf8") as f:
         lines = f.readlines()
